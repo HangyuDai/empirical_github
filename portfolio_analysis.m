@@ -12,14 +12,14 @@ crsplag.wt=crsplag.me;
 
 crsp=innerjoin(crsp,crsplag(:,{'ereturn','yymm','permno','wt'}),'Keys',{'yymm','permno'});
 
-%Merge
+% Merge
 Rf.yymm=floor(Rf.Var1/100)*12+mod(Rf.Var1,100)-1;
 Rf.Mkt_RF=Rf.Mkt_RF/100;
 Rf.RF=Rf.RF/100;
 crsp1=innerjoin(crsp,Rf(:,{'RF','yymm'}),'Keys','yymm');
 crsp1.ereturn=crsp1.ereturn-crsp1.RF;
 
-%Portfolio Analyse
+%Portfolio Analysis
 crsp1.sortvar=crsp1.me;
 %crsp1.sortvar=crsp1.beme;
 
@@ -68,3 +68,29 @@ bar(Sharpe)
 title('Sharpe Ratio')
 
 sgtitle('Sort by size')
+
+
+%% Cumulative Returns (additional)
+
+dataFile = 'crsp_port.csv';
+crsp_table = readtable(dataFile);
+[G,permno] = findgroups(crsp_table.permno);
+r_cum = splitapply(@cumulativeReturn,crsp_table.retadj,G);
+firmReturn = table(permno,r_cum);
+
+% for loop
+crsp = sortrows(crsp_table,{'permno','date'},{'ascend','ascend'});
+cum_r = cell(length(permno),1);
+final_r = cell(length(permno),1);
+disp(cum_r)
+disp(final_r)
+
+for i=1:length(permno)
+    retadj = crsp(crsp.permno==permno(i),:).retadj;
+    cum_return = cumprod(retadj+1)-1;
+    cum_r(i) = mat2cell(cum_return,length(cum_return));
+    final_r(i) = {cum_return(end)};
+end
+cum_return_loop = table(permno,cum_r,final_r);
+
+disp(cum_return_loop)
